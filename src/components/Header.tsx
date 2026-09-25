@@ -48,39 +48,57 @@ export const Header: React.FC<HeaderProps> = ({
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         {/* Brand & Platform Identity */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
-            <Activity className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className={`text-base font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                AlphaPairs Quant
-              </h1>
-
-              {/* Clickable MCP Badge with Live Status & Health */}
-              <button
-                onClick={onOpenMcpModal}
-                className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border transition-all flex items-center gap-1.5 hover:scale-105 ${
-                  isDark
-                    ? 'bg-emerald-950/70 border-emerald-700/50 text-emerald-400 hover:border-emerald-500'
-                    : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:border-emerald-500'
-                }`}
-                title="Click to view Model Context Protocol (MCP) server health and live wire frames"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Yahoo Finance MCP · 38ms</span>
-                <span className="text-[10px] text-emerald-600 font-sans">▾</span>
-              </button>
+        <div className="flex items-center justify-between w-full lg:w-auto gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
+              <Activity className="w-5 h-5" />
             </div>
-            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Econometric Peer Deviation & Statistical Arbitrage Engine
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className={`text-base font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  AlphaPairs Quant
+                </h1>
+
+                {/* Clickable MCP Badge with Live Status & Health - Alpha Vantage Default */}
+                <button
+                  onClick={onOpenMcpModal}
+                  className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border transition-all flex items-center gap-1.5 hover:scale-105 ${
+                    isDark
+                      ? 'bg-emerald-950/70 border-emerald-700/50 text-emerald-400 hover:border-emerald-500'
+                      : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:border-emerald-500'
+                  }`}
+                  title="Click to view Model Context Protocol (MCP) server health and live wire frames (Alpha Vantage active)"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Alpha Vantage MCP · 42ms</span>
+                  <span className="text-[10px] text-emerald-600 font-sans">▾</span>
+                </button>
+              </div>
+              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Econometric Peer Deviation & Statistical Arbitrage Engine
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile Theme Toggle at Top Right */}
+          <div className="lg:hidden">
+            <button
+              onClick={onToggleTheme}
+              className={`p-2 rounded-lg border text-xs transition-colors flex items-center gap-1.5 ${
+                isDark
+                  ? 'bg-slate-900 border-slate-700 text-amber-400 hover:bg-slate-800'
+                  : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-100 shadow-xs'
+              }`}
+              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+            </button>
           </div>
         </div>
 
-        {/* Clustered Controls Group to prevent visual crowdedness */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+        {/* Controls Group with Standalone Theme Toggle at Far Top Right */}
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-2 sm:gap-2.5 w-full lg:w-auto">
           {/* Active Deviations Badge */}
           <div className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${
             isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100 border-slate-200'
@@ -158,22 +176,6 @@ export const Header: React.FC<HeaderProps> = ({
               ))}
               <GrandmaTooltip title="Z-Score (Deviation Surprise)" theme={theme} />
             </div>
-
-            {/* Section 3: Theme Toggle (Dark / Light) */}
-            <div className="pl-2 pr-1 flex items-center">
-              <button
-                onClick={onToggleTheme}
-                className={`p-1 rounded-md transition-colors ${
-                  isDark
-                    ? 'text-amber-400 hover:bg-slate-800'
-                    : 'text-slate-700 hover:bg-white shadow-sm'
-                }`}
-                title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-                aria-label="Toggle theme"
-              >
-                {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-              </button>
-            </div>
           </div>
 
           {/* Sync Button */}
@@ -185,6 +187,32 @@ export const Header: React.FC<HeaderProps> = ({
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Sync</span>
           </button>
+
+          {/* Desktop Standalone Theme Toggle at Far Top Right */}
+          <div className="hidden lg:flex items-center pl-1">
+            <button
+              onClick={onToggleTheme}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all shadow-xs ${
+                isDark
+                  ? 'bg-slate-900 border-slate-700 text-amber-400 hover:bg-slate-800 hover:border-slate-600'
+                  : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-100 hover:border-slate-300'
+              }`}
+              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              aria-label="Toggle light and dark theme"
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-400" />
+                  <span className="text-slate-300 font-medium">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-indigo-600" />
+                  <span className="text-slate-700 font-medium">Dark</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </header>

@@ -13,7 +13,10 @@ import {
   ShieldAlert,
   Flame,
   Scale,
-  Activity
+  Activity,
+  BarChart3,
+  Bot,
+  Radio
 } from 'lucide-react';
 import { RealTimeSignal } from '../types/financial';
 import { GrandmaTooltip } from './GrandmaTooltip';
@@ -23,13 +26,17 @@ interface RealTimeSignalsSectionProps {
   onSelectTarget: (ticker: string) => void;
   currentTargetTicker: string;
   theme?: 'dark' | 'light';
+  onInspectChart?: (ticker: string) => void;
+  onOpenAiMemo?: (ticker: string) => void;
 }
 
 export const RealTimeSignalsSection: React.FC<RealTimeSignalsSectionProps> = ({
   signals,
   onSelectTarget,
   currentTargetTicker,
-  theme = 'dark'
+  theme = 'dark',
+  onInspectChart,
+  onOpenAiMemo
 }) => {
   const [filter, setFilter] = useState<'ALL' | 'BUY' | 'SHORT' | 'ALIGNED'>('ALL');
   const isDark = theme === 'dark';
@@ -47,31 +54,83 @@ export const RealTimeSignalsSection: React.FC<RealTimeSignalsSectionProps> = ({
   });
 
   return (
-    <section className={`border-2 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5 transition-colors ${
-      isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-slate-100'
-    }`}>
-      {/* Header with Title, Delineation Badge & Quick Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/40">
+    <section
+      id="right-now"
+      aria-label="Right Now"
+      className={`border rounded-2xl p-5 sm:p-6 shadow-xl space-y-6 transition-colors ${
+        isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-slate-100'
+      }`}
+    >
+      {/* Top Banner: Section "Right Now" Title, Live Indicator & Status Counters */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800/40">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-black font-mono tracking-widest uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              LIVE SIGNAL RADAR
+            <span className="text-xs font-black font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>LIVE RADAR</span>
             </span>
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <h2 className={`text-lg sm:text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              Present-Time Lag & Surge Opportunities
+
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Right Now
             </h2>
+
+            <span className={`text-xs px-2 py-0.5 rounded font-mono ${
+              isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'
+            }`}>
+              Present-Time Scanner
+            </span>
+
             <GrandmaTooltip title="Z-Score (Deviation Surprise)" theme={theme} />
           </div>
-          <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-            Real-time scan across your basket: identifies which stock is significantly lagging its peers (flagged as a <strong>Potential Buy</strong>) or surging ahead too far (flagged as a <strong>Potential Short Sell</strong>).
+
+          <p className={`text-xs sm:text-sm mt-1.5 max-w-3xl leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Real-time scan across your basket: highlights in present time which stock is currently showing a significant
+            <strong className="text-emerald-500"> lag (potential buy) </strong> or
+            <strong className="text-rose-500"> surge (potential short sell) </strong> relative to its peer group.
           </p>
         </div>
 
-        {/* Filter Pills */}
+        {/* Live MCP Status Pill */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono shrink-0 ${
+          isDark ? 'bg-slate-950/70 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+        }`}>
+          <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+          <span>Active Feed:</span>
+          <span className="font-bold text-emerald-400">Alpha Vantage MCP</span>
+        </div>
+      </div>
+
+      {/* Stats Summary Bar & Tactical Quick Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        {/* Quick Counts */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Potential Buys:</span>
+            <span className="font-mono font-bold text-emerald-400">{buySignals.length}</span>
+          </div>
+
+          <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>·</span>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Potential Shorts:</span>
+            <span className="font-mono font-bold text-rose-400">{shortSignals.length}</span>
+          </div>
+
+          <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>·</span>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+            <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>In Line:</span>
+            <span className="font-mono font-bold">{alignedSignals.length}</span>
+          </div>
+        </div>
+
+        {/* Filter Buttons */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
           <button
             onClick={() => setFilter('ALL')}
@@ -220,28 +279,47 @@ export const RealTimeSignalsSection: React.FC<RealTimeSignalsSectionProps> = ({
                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="pt-2 border-t border-slate-800/40 flex items-center justify-between text-xs">
+              {/* Action Buttons */}
+              <div className="pt-2 border-t border-slate-800/40 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   vs {signal.peerTickers.join(', ')}
                 </span>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectTarget(signal.ticker);
-                  }}
-                  className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
-                    isSelected
-                      ? 'bg-emerald-500 text-slate-950 font-bold'
-                      : isDark
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-                      : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                  }`}
-                >
-                  {isSelected ? 'Active Target ✓' : 'Set as Target Equity →'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {onInspectChart && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onInspectChart(signal.ticker);
+                      }}
+                      className={`text-[11px] font-medium px-2 py-1 rounded transition-colors flex items-center gap-1 ${
+                        isDark ? 'text-cyan-400 hover:bg-slate-800' : 'text-cyan-700 hover:bg-slate-100'
+                      }`}
+                      title="Inspect regression spread chart for this equity"
+                    >
+                      <BarChart3 className="w-3 h-3" />
+                      <span>Chart</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectTarget(signal.ticker);
+                    }}
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
+                      isSelected
+                        ? 'bg-emerald-500 text-slate-950 font-bold'
+                        : isDark
+                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                        : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                    }`}
+                  >
+                    {isSelected ? 'Active Target ✓' : 'Set as Target →'}
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -250,3 +328,4 @@ export const RealTimeSignalsSection: React.FC<RealTimeSignalsSectionProps> = ({
     </section>
   );
 };
+

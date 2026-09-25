@@ -39,13 +39,24 @@ interface McpHealthMetric {
 
 const MCP_PRODUCTION_HEALTH: McpHealthMetric[] = [
   {
-    serverId: 'mcp-server-yfinance',
-    name: 'Yahoo Finance Production MCP',
-    role: 'Primary Market Data Engine (Daily Bars, Volumes, Splits, Market Cap)',
+    serverId: 'alpha-vantage-mcp',
+    name: 'Alpha Vantage Global Financial MCP',
+    role: 'Primary Active Market Data Engine (Daily OHLCV, Quotes, Real-Time Spreads)',
     status: 'Operational',
-    latencyMs: 38,
-    uptimePct: 99.95,
+    latencyMs: 42,
+    uptimePct: 99.96,
     lastChecked: 'Just now',
+    endpointsActive: 4,
+    protocolVersion: '2024-11-05'
+  },
+  {
+    serverId: 'mcp-server-yfinance',
+    name: 'Yahoo Finance Secondary MCP',
+    role: 'Secondary Backup Provider (Daily Bars, Volumes, Splits, Market Cap)',
+    status: 'Operational',
+    latencyMs: 58,
+    uptimePct: 99.95,
+    lastChecked: '1 min ago',
     endpointsActive: 4,
     protocolVersion: '2024-11-05'
   },
@@ -56,7 +67,7 @@ const MCP_PRODUCTION_HEALTH: McpHealthMetric[] = [
     status: 'Operational',
     latencyMs: 72,
     uptimePct: 99.88,
-    lastChecked: '1 min ago',
+    lastChecked: '2 mins ago',
     endpointsActive: 6,
     protocolVersion: '2024-11-05'
   },
@@ -69,17 +80,6 @@ const MCP_PRODUCTION_HEALTH: McpHealthMetric[] = [
     uptimePct: 99.92,
     lastChecked: '3 mins ago',
     endpointsActive: 3,
-    protocolVersion: '2024-11-05'
-  },
-  {
-    serverId: 'alpha-vantage-mcp',
-    name: 'Alpha Vantage Global Indicators MCP',
-    role: 'Secondary Backup Provider (SMA, Technical Indicators & Intraday)',
-    status: 'Standby',
-    latencyMs: 95,
-    uptimePct: 99.70,
-    lastChecked: '5 mins ago',
-    endpointsActive: 5,
     protocolVersion: '2024-11-05'
   }
 ];
@@ -253,7 +253,7 @@ export const McpInspectorModal: React.FC<McpInspectorModalProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {MCP_PRODUCTION_HEALTH.map(server => {
-                  const isPrimary = server.serverId === 'mcp-server-yfinance';
+                  const isPrimary = server.serverId === 'alpha-vantage-mcp';
                   return (
                     <div
                       key={server.serverId}

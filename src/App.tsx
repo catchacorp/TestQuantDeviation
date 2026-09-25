@@ -8,6 +8,7 @@ import { PairInspector } from './components/PairInspector';
 import { PeerGroupingExplainerTab } from './components/PeerGroupingExplainerTab';
 import { McpInspectorModal } from './components/McpInspectorModal';
 import { AiMemoModal } from './components/AiMemoModal';
+import { RealTimeSignalsSection } from './components/RealTimeSignalsSection';
 import { DEFAULT_TICKERS, STOCK_PROFILES } from './data/defaultStocks';
 import { mcpService } from './services/mcpFinancialService';
 import {
@@ -15,13 +16,15 @@ import {
   clusterPeersByCorrelation,
   buildPeerBenchmarkSeries,
   calculateResidualSpreadAndZScores,
-  detectDivergenceEpisodes
+  detectDivergenceEpisodes,
+  calculateRealTimeSignals
 } from './services/quantEngine';
 import {
   HistoricalDataMap,
   DivergenceEvent,
   CorrelationMatrix,
-  ClusterGroup
+  ClusterGroup,
+  RealTimeSignal
 } from './types/financial';
 import {
   Activity,
@@ -34,7 +37,8 @@ import {
   Sparkles,
   Info,
   Boxes,
-  Heart
+  Heart,
+  Zap
 } from 'lucide-react';
 import { GrandmaTooltip } from './components/GrandmaTooltip';
 
@@ -59,7 +63,7 @@ export default function App() {
   const [pairB, setPairB] = useState<string>('AMD');
 
   // Navigation View Tabs
-  const [activeTab, setActiveTab] = useState<'episodes' | 'charts' | 'correlation' | 'pairs' | 'peer_logic'>('episodes');
+  const [activeTab, setActiveTab] = useState<'right_now' | 'episodes' | 'charts' | 'correlation' | 'pairs' | 'peer_logic'>('right_now');
 
   // Market Data & Computed Analytics Cache
   const [historicalData, setHistoricalData] = useState<HistoricalDataMap>({});
@@ -96,6 +100,16 @@ export default function App() {
     if (correlationMatrix.tickers.length === 0) return [];
     return clusterPeersByCorrelation(correlationMatrix, 0.45);
   }, [correlationMatrix]);
+
+  // Real-Time Present-Day Basket Signals ("Right Now" Section)
+  const realTimeSignals: RealTimeSignal[] = useMemo(() => {
+    return calculateRealTimeSignals(selectedTickers, clusters, historicalData, zThreshold);
+  }, [selectedTickers, clusters, historicalData, zThreshold]);
+
+  // Number of active tactical opportunities (lags or surges)
+  const tacticalSignalsCount = useMemo(() => {
+    return realTimeSignals.filter(s => s.signalType !== 'ALIGNED').length;
+  }, [realTimeSignals]);
 
   // Determine peer group for the current target ticker
   const targetPeers = useMemo(() => {
@@ -248,15 +262,24 @@ export default function App() {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setTargetTicker(activeDivergences[0].ticker);
-                setActiveTab('charts');
-              }}
-              className="text-xs font-semibold text-amber-950 bg-amber-400 hover:bg-amber-300 px-3.5 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm"
-            >
-              Inspect {activeDivergences[0].ticker} Spread
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('right_now')}
+                className="text-xs font-semibold text-emerald-950 bg-emerald-400 hover:bg-emerald-300 px-3.5 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm flex items-center gap-1.5"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>View in "Right Now"</span>
+              </button>
+              <button
+                onClick={() => {
+                  setTargetTicker(activeDivergences[0].ticker);
+                  setActiveTab('charts');
+                }}
+                className="text-xs font-semibold text-amber-950 bg-amber-400 hover:bg-amber-300 px-3.5 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm"
+              >
+                Inspect {activeDivergences[0].ticker} Spread
+              </button>
+            </div>
           </div>
         )}
 
@@ -264,6 +287,28 @@ export default function App() {
         <div className={`border-b flex flex-wrap items-center gap-1 sm:gap-2 ${
           isDark ? 'border-slate-800' : 'border-slate-200'
         }`}>
+          {/* TAB 0: "Right Now" Live Scanner Section */}
+          <button
+            onClick={() => setActiveTab('right_now')}
+            className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'right_now'
+                ? 'border-emerald-500 text-emerald-500 font-bold'
+                : isDark ? 'border-transparent text-slate-400 hover:text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <Zap className="w-4 h-4 text-emerald-400" />
+            <span>Right Now</span>
+            {tacticalSignalsCount > 0 && (
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                {tacticalSignalsCount}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => setActiveTab('episodes')}
             className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
@@ -312,7 +357,7 @@ export default function App() {
             <span>Single-Pair Inspector</span>
           </button>
 
-          {/* NEW TAB: Why Stocks Are Grouped Together */}
+          {/* TAB: Why Stocks Are Grouped Together */}
           <button
             onClick={() => setActiveTab('peer_logic')}
             className={`flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
@@ -328,6 +373,24 @@ export default function App() {
             </span>
           </button>
         </div>
+
+        {/* View 0: Dedicated Section "Right Now" - Present-Time Lag & Surge Radar */}
+        {activeTab === 'right_now' && (
+          <RealTimeSignalsSection
+            signals={realTimeSignals}
+            onSelectTarget={ticker => setTargetTicker(ticker)}
+            currentTargetTicker={targetTicker}
+            theme={theme}
+            onInspectChart={ticker => {
+              setTargetTicker(ticker);
+              setActiveTab('charts');
+            }}
+            onOpenAiMemo={ticker => {
+              const ev = allDivergenceEpisodes.find(e => e.ticker === ticker);
+              if (ev) setAiMemoEvent(ev);
+            }}
+          />
+        )}
 
         {/* View 1: Divergence Episodes Table with Start, Peak, Collapse Dates & Catalysts */}
         {activeTab === 'episodes' && (

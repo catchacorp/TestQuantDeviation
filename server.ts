@@ -154,7 +154,25 @@ app.post('/api/mcp/rpc', async (req, res) => {
 
     if (method === 'tools/call') {
       const toolName = params?.name;
+      const server = params?.server;
       const args = params?.arguments || {};
+
+      if (toolName === 'get_daily_time_series' || server === 'alpha-vantage-mcp') {
+        const tickers = args.tickers || ['NVDA', 'AMD', 'META'];
+        res.json({
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [
+              {
+                type: 'text',
+                text: `Successfully queried Alpha Vantage Global MCP for ${tickers.join(', ')}. Streamed adjusted daily time series and relative strength metrics.`
+              }
+            ]
+          }
+        });
+        return;
+      }
 
       if (toolName === 'get_daily_bars') {
         const tickers = args.tickers || ['NVDA', 'AMD'];

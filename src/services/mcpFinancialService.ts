@@ -10,6 +10,75 @@ import { DEFAULT_TICKERS, STOCK_PROFILES } from '../data/defaultStocks';
 
 export const REGISTERED_MCP_SERVERS: MCPServerInfo[] = [
   {
+    id: 'alpha-vantage-mcp',
+    name: 'Alpha Vantage Global Financial MCP',
+    description: 'High-throughput financial market data server supplying real-time quotes, daily adjusted OHLCV bars, technical indicators (SMA, EMA, RSI), and peer relative strength.',
+    status: 'connected',
+    transport: 'stdio',
+    tools: [
+      {
+        name: 'get_daily_time_series',
+        description: 'Fetch daily adjusted closing prices, volumes, splits, and returns for target equities from Alpha Vantage.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            tickers: { type: 'array', items: { type: 'string' } },
+            outputsize: { type: 'string', enum: ['compact', 'full'] },
+            datatype: { type: 'string', enum: ['json', 'csv'] }
+          },
+          required: ['tickers']
+        }
+      },
+      {
+        name: 'get_realtime_quote',
+        description: 'Fetch latest real-time equity quotes, bid/ask spreads, and daily percentage change.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            ticker: { type: 'string' }
+          },
+          required: ['ticker']
+        }
+      },
+      {
+        name: 'get_sma_indicators',
+        description: 'Calculate Simple Moving Averages (20d, 50d, 200d) and standard deviation bands.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            ticker: { type: 'string' },
+            time_period: { type: 'number' },
+            series_type: { type: 'string', enum: ['close', 'open', 'high', 'low'] }
+          },
+          required: ['ticker', 'time_period']
+        }
+      },
+      {
+        name: 'get_peer_relative_strength',
+        description: 'Evaluate peer covariance, relative momentum, and statistical deviation across industry peers.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            targetTicker: { type: 'string' },
+            peerTickers: { type: 'array', items: { type: 'string' } }
+          },
+          required: ['targetTicker', 'peerTickers']
+        }
+      }
+    ],
+    sampleConfig: `{
+  "mcpServers": {
+    "alpha-vantage": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-alpha-vantage"],
+      "env": {
+        "ALPHA_VANTAGE_API_KEY": "YOUR_ALPHA_VANTAGE_API_KEY"
+      }
+    }
+  }
+}`
+  },
+  {
     id: 'mcp-server-yfinance',
     name: 'Yahoo Finance MCP Server',
     description: 'High-throughput financial market data server supplying daily adjusted OHLCV bars, splits, dividends, and peer fundamentals.',
@@ -143,12 +212,30 @@ export const REGISTERED_MCP_SERVERS: MCPServerInfo[] = [
 class MCPFinancialService {
   private rpcLog: MCPRpcMessage[] = [];
   private cache: Map<string, PricePoint[]> = new Map();
+  private activeServerId: string = 'alpha-vantage-mcp';
 
   constructor() {
     // Prime cache with verified historical market baseline
     const baseline = getBaselineHistoricalPrices(DEFAULT_TICKERS);
     for (const ticker of Object.keys(baseline)) {
       this.cache.set(ticker, baseline[ticker]);
+    }
+  }
+
+  public getActiveServerId(): string {
+    return this.activeServerId;
+  }
+
+  public getActiveServer(): MCPServerInfo {
+    return (
+      REGISTERED_MCP_SERVERS.find(s => s.id === this.activeServerId) ||
+      REGISTERED_MCP_SERVERS[0]
+    );
+  }
+
+  public setActiveServerId(id: string): void {
+    if (REGISTERED_MCP_SERVERS.some(s => s.id === id)) {
+      this.activeServerId = id;
     }
   }
 
@@ -190,14 +277,14 @@ class MCPFinancialService {
     // If missing tickers need fetching (e.g. user entered custom ticker like TSM, INTC, CRM)
     if (missingTickers.length > 0) {
       try {
-        // Try calling server-side financial proxy
+        // Try calling server-side financial proxy with Alpha Vantage MCP by default
         this.logRpc({
           direction: 'client_to_server',
           method: 'tools/call',
           params: {
-            server: 'mcp-server-yfinance',
-            tool: 'get_daily_bars',
-            arguments: { tickers: missingTickers, period: '2y' }
+            server: this.activeServerId,
+            tool: 'get_daily_time_series',
+            arguments: { tickers: missingTickers, outputsize: 'compact' }
           }
         });
 
