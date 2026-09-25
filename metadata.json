@@ -1,0 +1,6 @@
+{
+  "name": "AlphaPairs - MCP Equity Divergence & Peer Correlation Quant Engine",
+  "description": "Evaluate US equity price co-movements, identify peer correlation clusters, and detect historical and real-time statistical deviations using logarithms, regressions, and MCP financial servers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
